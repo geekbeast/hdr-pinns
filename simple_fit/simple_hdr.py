@@ -15,7 +15,7 @@ class SimpleHdr(nn.Module):
         self.fc2 = nn.Linear(10, 10)  # 10 hidden units, 1 output
         self.fc3 = nn.Linear(10, 10)  # 10 hidden units, 1 output
         self.fc4 = nn.Linear(10, 10)
-        self.fc5 = nn.Linear(10, 1000)
+        self.fc5 = nn.Linear(10, 100)
         self.optimizer = optimizer(self.parameters())
         # self.init_xavier()
 
@@ -41,13 +41,14 @@ class SimpleHdr(nn.Module):
             loss = step.train()
             # self.optimizer.step(closure)
             # loss = closure().item()
-            if (epoch + 1) % 100 == 0:
+            if (epoch + 1) % 10 == 0:
                 print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss:.4f}')
 
     def predict(self, x):
         self.eval()
         with torch.no_grad():
-            return torch_sumAsin(self(torch.from_numpy(x).float().view(-1,1))).numpy()
+            return torch_sumAsin(torch.from_numpy(x).float().view(-1, 1),
+                                 self(torch.from_numpy(x).float().view(-1, 1))).numpy()
 
     def init_xavier(self):
         # torch.manual_seed(self.retrain_seed)
@@ -61,6 +62,7 @@ class SimpleHdr(nn.Module):
 
         self.apply(init_weights)
 
+
 class ModelTrainingStep:
     def __init__(self, model, inputs, targets):
         self.model = model
@@ -70,7 +72,7 @@ class ModelTrainingStep:
     def __call__(self):
         self.model.optimizer.zero_grad()
         outputs = self.model(self.inputs)
-        loss = self.model.criterion(outputs, self.targets)
+        loss = self.model.criterion(self.inputs, outputs, self.targets)
         loss.backward()
         return loss
 
