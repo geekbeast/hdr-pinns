@@ -1,0 +1,12 @@
+tokenizers
+numpy
+scipy
+torch>=2.5.0
+torchvision
+torchaudio
+scikit-learn
+wheel
+matplotlib
+setuptools
+datasets
+transformers
