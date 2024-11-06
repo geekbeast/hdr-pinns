@@ -34,9 +34,9 @@ if __name__ == '__main__':
     plt.show()
     def opt(params):
         return optim.LBFGS(params, max_iter=100, tolerance_grad=1e-10, tolerance_change=1e-10,line_search_fn="strong_wolfe")
-    # model = SimpleNN(optim.Adam, nn.MSELoss())
+    model = SimpleNN(optim.Adam, nn.MSELoss())
     # model = SimpleHdr(opt, torch_sumAsin_loss)
-    model = SimpleHdr(optim.Adam, torch_sumAsin_loss)
+    # model = SimpleHdr(optim.Adam, torch_sumAsin_loss)
     model.fit(10000, x_train, y2_train)
     y_pred = model.predict(x_train)
 

@@ -18,6 +18,7 @@ class BaseSimpleNetwork(nn.Module):
 
     def configure_optimizer(self, optimizer):
         self.optimizer = optimizer(self.parameters())
+
 class NeuralNet(nn.Module):
 
     def __init__(self, input_dimension, output_dimension, n_hidden_layers, neurons, regularization_param, regularization_exp, retrain_seed):
