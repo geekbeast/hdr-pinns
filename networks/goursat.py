@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from matplotlib import pyplot as plt
 from numpy.random import random
+from torch import nn
 from torch.utils.data import DataLoader
 
 from networks.base import NeuralNet
@@ -25,7 +26,9 @@ class Goursat:
         self.lambda_u = 10
 
         # F Dense NN to approximate the solution of the underlying heat equation
-        self.approximate_solution = NeuralNet(input_dimension=self.domain_extrema.shape[0], output_dimension=1,
+        self.approximate_solution = NeuralNet(activation=nn.SiLu(),
+                                              input_dimension=self.domain_extrema.shape[0],
+                                              output_dimension=1,
                                               n_hidden_layers=4,
                                               neurons=20,
                                               regularization_param=0.,
