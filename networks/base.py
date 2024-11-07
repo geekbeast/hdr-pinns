@@ -21,7 +21,7 @@ class BaseSimpleNetwork(nn.Module):
 
 class NeuralNet(nn.Module):
 
-    def __init__(self, activation, input_dimension, output_dimension, n_hidden_layers, neurons, regularization_param, regularization_exp, retrain_seed):
+    def __init__(self, input_dimension, output_dimension, n_hidden_layers, neurons, regularization_param, regularization_exp, retrain_seed, activation = nn.SiLU()):
         super(NeuralNet, self).__init__()
         # Number of input dimensions n
         self.input_dimension = input_dimension

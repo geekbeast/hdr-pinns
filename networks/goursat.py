@@ -26,7 +26,7 @@ class Goursat:
         self.lambda_u = 10
 
         # F Dense NN to approximate the solution of the underlying heat equation
-        self.approximate_solution = NeuralNet(activation=nn.SiLu(),
+        self.approximate_solution = NeuralNet(activation=nn.SiLU(),
                                               input_dimension=self.domain_extrema.shape[0],
                                               output_dimension=1,
                                               n_hidden_layers=4,
