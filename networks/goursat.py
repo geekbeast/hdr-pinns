@@ -8,13 +8,13 @@ from networks.base import NeuralNet
 
 
 class Goursat:
-    def __init__(self, n_int_, n_sb_, n_tb_):
+    def __init__(self, n_int_, n_sb_, n_tb_, lb=-1, ub=1):
         self.n_int = n_int_
         self.n_sb = n_sb_
         self.n_tb = n_tb_
 
         # Extrema of the solution domain (s,t) in [0,1]x[0,1]
-        self.domain_extrema = torch.tensor([[0,1], # lambda_{x_s,y_t}
+        self.domain_extrema = torch.tensor([[lb,ub], # lambda_{x_s,y_t}
                                             [0, 1],  # s dimension
                                             [0, 1]])  # t dimension
 
@@ -69,9 +69,6 @@ class Goursat:
 
     # Function returning the input-output tensor required to assemble the training set S_sb corresponding to the spatial boundary
     def add_spatial_boundary_points(self):
-        s0 = self.domain_extrema[1, 0]
-        sL = self.domain_extrema[1, 1]
-
         input_sb = self.convert(self.soboleng.draw(self.n_sb))
 
         input_sb_0 = torch.clone(input_sb)
