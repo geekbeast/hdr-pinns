@@ -9,11 +9,11 @@ from networks.base import NeuralNet
 
 
 class Goursat:
-    def __init__(self, n_int_, n_sb_, n_tb_, lb=-1, ub=1):
+    def __init__(self, n_int_, n_sb_, n_tb_,f_xy, lb=-1, ub=1):
         self.n_int = n_int_
         self.n_sb = n_sb_
         self.n_tb = n_tb_
-
+        self.f_xy = f_xy
         # Extrema of the solution domain (s,t) in [0,1]x[0,1]
         self.domain_extrema = torch.tensor([[lb,ub], # lambda_{x_s,y_t}
                                             [0, 1],  # s dimension
@@ -89,6 +89,7 @@ class Goursat:
     #  Function returning the input-output tensor required to assemble the training set S_int corresponding to the interior domain where the PDE is enforced
     def add_interior_points(self):
         input_int = self.convert(self.soboleng.draw(self.n_int))
+        input_int[:,0] = self.f_xy(input_int[:,1], input_int[:,2])
         output_int = torch.zeros((input_int.shape[0], 1))
         return input_int, output_int
 
