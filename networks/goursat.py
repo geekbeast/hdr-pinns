@@ -9,15 +9,15 @@ from networks.base import NeuralNet
 
 
 class Goursat:
-    def __init__(self, n_int_, n_sb_, n_tb_,f_xy, lb=-1, ub=1):
+    def __init__(self, n_int_, n_sb_, n_tb_,f_xy):
         self.n_int = n_int_
         self.n_sb = n_sb_
         self.n_tb = n_tb_
         self.f_xy = f_xy
         # Extrema of the solution domain (s,t) in [0,1]x[0,1]
-        self.domain_extrema = torch.tensor([[lb,ub], # lambda_{x_s,y_t}
+        self.domain_extrema = torch.tensor([# lambda_{x_s,y_t}
                                             [0, 1],  # s dimension
-                                            [0, 1]])  # t dimension
+                                            [0, 1]]).cuda()  # t dimension
 
         # Number of space dimensions
         self.space_dimensions = 1
@@ -47,7 +47,7 @@ class Goursat:
     # to a tensor whose values are between the domain extrema
     def convert(self, tens):
         assert (tens.shape[1] == self.domain_extrema.shape[0])
-        return tens * (self.domain_extrema[:, 1] - self.domain_extrema[:, 0]) + self.domain_extrema[:, 0]
+        return tens.cuda() * (self.domain_extrema[:, 1] - self.domain_extrema[:, 0]) + self.domain_extrema[:, 0]
 
     # Initial condition to solve the heat equation u0(x)=-sin(pi x)
     def initial_condition(self, x):
@@ -76,20 +76,18 @@ class Goursat:
 
         input_sb_0 = torch.clone(input_sb)
         input_sb_L = torch.clone(input_sb)
-        # lambda, s [0,1], 0
-        input_sb_0[:, 1] = 0
-        # lambda, 0, t [0,]
-        input_sb_L[:,2] = 0
 
-        output_sb_0 = torch.ones((input_sb.shape[0], 1))
-        output_sb_L = torch.ones((input_sb.shape[0], 1))
+        input_sb_0[:,0] = 0
+        input_sb_L[:,1] = 0
+
+        output_sb_0 = torch.ones((input_sb.shape[0], 1)).cuda()
+        output_sb_L = torch.ones((input_sb.shape[0], 1)).cuda()
 
         return torch.cat([input_sb_0, input_sb_L], 0), torch.cat([output_sb_0, output_sb_L], 0)
 
     #  Function returning the input-output tensor required to assemble the training set S_int corresponding to the interior domain where the PDE is enforced
     def add_interior_points(self):
         input_int = self.convert(self.soboleng.draw(self.n_int))
-        input_int[:,0] = self.f_xy(input_int[:,1], input_int[:,2])
         output_int = torch.zeros((input_int.shape[0], 1))
         return input_int, output_int
 
@@ -132,9 +130,9 @@ class Goursat:
         # grad_u = [[dsum_u/dx1, dsum_u/dy1],[dsum_u/dx2, dsum_u/dy2], [dsum_u/dx3, dL/dy3],...,[dsum_u/dxm, dsum_u/dyn]]
         # and dsum_u/dxi = d(u1 + u2 + u3 + u4 + ... + un)/dxi = d(u(x1) + u(x2) u3(x3) + u4(x4) + ... + u(xn))/dxi = dui/dxi
         grad_u = torch.autograd.grad(u.sum(), input_int, create_graph=True)[0]
-        grad_u_st = torch.autograd.grad(grad_u[:,1].sum(), input_int, create_graph=True)[0]
-
-        residual = grad_u_st[:,2:] - input_int[:,:1]*u
+        grad_u_s = torch.autograd.grad(grad_u[:,0:1].sum(), input_int, create_graph=True)[0]
+        grad_u_s_t = grad_u_s[:,1:2]
+        residual = grad_u_s_t - self.f_xy(input_int)*u
         return residual.reshape(-1, )
 
     # Function to compute the total loss (weighted sum of spatial boundary loss, temporal boundary loss and interior loss)
@@ -155,10 +153,10 @@ class Goursat:
         loss_tb = 0
         loss_int = torch.mean(abs(r_int) ** 2)
 
-        loss_u = loss_sb + loss_tb
+        loss_u = loss_sb + loss_int
 
-        loss = torch.log10(self.lambda_u * (loss_sb + loss_tb) + loss_int)
-        if verbose: print("Total loss: ", round(loss.item(), 4), "| PDE Loss: ", round(torch.log10(loss_u).item(), 4), "| Function Loss: ", round(torch.log10(loss_int).item(), 4))
+        loss = torch.log10((loss_sb + loss_tb) + self.lambda_u * loss_int)
+        if verbose: print("Total loss: ", round(loss.item(), 4), "| Boundary Loss: ", round(torch.log10(loss_u).item(), 4), "| PDE Loss: ", round(torch.log10(loss_int).item(), 4))
 
         return loss
 
