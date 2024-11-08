@@ -80,8 +80,8 @@ class Goursat:
         input_sb_0[:,0] = 0
         input_sb_L[:,1] = 0
 
-        output_sb_0 = torch.ones((input_sb.shape[0], 1)).cuda()
-        output_sb_L = torch.ones((input_sb.shape[0], 1)).cuda()
+        output_sb_0 = self.f_xy.scale*torch.ones((input_sb.shape[0], 1)).cuda()
+        output_sb_L = self.f_xy.scale*torch.ones((input_sb.shape[0], 1)).cuda()
 
         return torch.cat([input_sb_0, input_sb_L], 0), torch.cat([output_sb_0, output_sb_L], 0)
 
@@ -129,9 +129,10 @@ class Goursat:
         # In our case ui = u(xi), therefore the line below returns:
         # grad_u = [[dsum_u/dx1, dsum_u/dy1],[dsum_u/dx2, dsum_u/dy2], [dsum_u/dx3, dL/dy3],...,[dsum_u/dxm, dsum_u/dyn]]
         # and dsum_u/dxi = d(u1 + u2 + u3 + u4 + ... + un)/dxi = d(u(x1) + u(x2) u3(x3) + u4(x4) + ... + u(xn))/dxi = dui/dxi
-        grad_u = torch.autograd.grad(u.sum(), input_int, create_graph=True)[0]
-        grad_u_s = torch.autograd.grad(grad_u[:,0:1].sum(), input_int, create_graph=True)[0]
-        grad_u_s_t = grad_u_s[:,1:2]
+
+        grad_u = torch.autograd.grad(u.sum(), input_int, create_graph=True)[0] # [du/ds du/dt]
+        grad_u2 = torch.autograd.grad(grad_u[:,0:1].sum(), input_int, create_graph=True)[0] #[du^2/ds^2 du/ds dt]
+        grad_u_s_t = grad_u2[:,1:2]
         residual = grad_u_s_t - self.f_xy(input_int)*u
         return residual.reshape(-1, )
 
