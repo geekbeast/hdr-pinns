@@ -156,7 +156,7 @@ class Goursat:
 
         loss_u = loss_sb + loss_int
 
-        loss = torch.log10((loss_sb + loss_tb) + self.lambda_u * loss_int)
+        loss = torch.log10( self.lambda_u * (loss_sb + loss_tb) + loss_int)
         if verbose: print("Total loss: ", round(loss.item(), 4), "| Boundary Loss: ", round(torch.log10(loss_u).item(), 4), "| PDE Loss: ", round(torch.log10(loss_int).item(), 4))
 
         return loss
