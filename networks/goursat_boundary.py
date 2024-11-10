@@ -8,16 +8,16 @@ from torch.utils.data import DataLoader
 from networks.base import NeuralNet
 
 
-class Goursat:
-    def __init__(self, n_int_, n_sb_, n_tb_,f_xy):
+class Goursat3D:
+    def __init__(self, n_int_, n_sb_, n_tb_, lb, ub):
         self.n_int = n_int_
         self.n_sb = n_sb_
         self.n_tb = n_tb_
-        self.f_xy = f_xy
         # Extrema of the solution domain (s,t) in [0,1]x[0,1]
-        self.domain_extrema = torch.tensor([# lambda_{x_s,y_t}
+        self.domain_extrema = torch.tensor([
                                             [0, 1],  # s dimension
-                                            [0, 1]]).cuda()  # t dimension
+                                            [0, 1],  # t dimension
+                                            [lb,ub] ]).cuda() # lambda_{x_s,y_t}]).cuda()
 
         # Number of space dimensions
         self.space_dimensions = 1
@@ -29,7 +29,7 @@ class Goursat:
         self.approximate_solution = NeuralNet(activation=nn.SiLU(),
                                               input_dimension=self.domain_extrema.shape[0],
                                               output_dimension=1,
-                                              n_hidden_layers=4,
+                                              n_hidden_layers=5,
                                               neurons=20,
                                               regularization_param=0.,
                                               regularization_exp=2.,
@@ -133,7 +133,7 @@ class Goursat:
         grad_u = torch.autograd.grad(u.sum(), input_int, create_graph=True)[0] # [du/ds du/dt]
         grad_u2 = torch.autograd.grad(grad_u[:,0:1].sum(), input_int, create_graph=True)[0] #[du^2/ds^2 du/ds dt]
         grad_u_s_t = grad_u2[:,1:2]
-        residual = grad_u_s_t - self.f_xy(input_int)*u
+        residual = grad_u_s_t - input_int[:,2:]*u
         return residual.reshape(-1, )
 
     # Function to compute the total loss (weighted sum of spatial boundary loss, temporal boundary loss and interior loss)
@@ -156,7 +156,7 @@ class Goursat:
 
         loss_u = loss_sb + loss_int
 
-        loss = torch.log10( self.lambda_u * (loss_sb + loss_tb) + loss_int)
+        loss = torch.log10((loss_sb + loss_tb) + self.lambda_u * loss_int)
         if verbose: print("Total loss: ", round(loss.item(), 4), "| Boundary Loss: ", round(torch.log10(loss_u).item(), 4), "| PDE Loss: ", round(torch.log10(loss_int).item(), 4))
 
         return loss
@@ -190,22 +190,28 @@ class Goursat:
         inputs = self.soboleng.draw(100000)
         inputs = self.convert(inputs)
 
+        f_xy = 1
+        exact_inputs = torch.clone(inputs)
+        exact_output = self.approximate_solution(exact_inputs).reshape(-1, )
+        inputs[:, 2] = f_xy
         output = self.approximate_solution(inputs).reshape(-1, )
-        exact_output = self.f_xy(inputs).reshape(-1, )
 
         fig, axs = plt.subplots(1, 2, figsize=(16, 8), dpi=150)
-        im1 = axs[0].scatter(inputs[:, 0].cpu().detach(), inputs[:, 1].cpu().detach(), c=exact_output.cpu().detach(), cmap="jet")
-        axs[0].set_xlabel("s")
-        axs[0].set_ylabel("t")
+        im1 = axs[0].scatter(exact_inputs[:, 2].cpu().detach(), exact_inputs[:, 0].cpu().detach(),
+                             c=exact_output.cpu().detach(),
+                             cmap="jet")
+        axs[0].set_xlabel("$\lambda$")
+        axs[0].set_ylabel("s")
         plt.colorbar(im1, ax=axs[0])
         axs[0].grid(True, which="both", ls=":")
-        im2 = axs[1].scatter(inputs[:, 0].cpu().detach(), inputs[:, 1].cpu().detach(), c=output.cpu().detach(), cmap="jet")
+        im2 = axs[1].scatter(inputs[:, 0].cpu().detach(), inputs[:, 1].cpu().detach(), c=output.cpu().detach(),
+                             cmap="jet")
         axs[1].set_xlabel("s")
         axs[1].set_ylabel("t")
         plt.colorbar(im2, ax=axs[1])
         axs[1].grid(True, which="both", ls=":")
-        axs[0].set_title("$f_xy(s,t)$")
-        axs[1].set_title("Approximate Solution")
+        axs[0].set_title("Lambda Dynamics")
+        axs[1].set_title(f"Approximate Solution ($\lambda = {f_xy}$)")
 
         plt.show()
 
