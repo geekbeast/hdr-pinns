@@ -8,7 +8,8 @@ class SimpleNN(nn.Module):
         self.fc1 = nn.Linear(1, 10)  # 1 input feature, 10 hidden units
         self.activation = nn.SiLU()
         self.fc2 = nn.Linear(10, 10)  # 10 hidden units, 1 output
-        self.fc3 = nn.Linear(10, 1)
+        self.fc3 = nn.Linear(10, 10)  # 10 hidden units, 1 output
+        self.fc4 = nn.Linear(10, 1)
         self.optimizer = optimizer(self.parameters())
 
     def forward(self, x):
@@ -17,11 +18,18 @@ class SimpleNN(nn.Module):
         x = self.fc2(x)
         x = self.activation(x)
         x = self.fc3(x)
+        x = self.activation(x)
+        x = self.fc4(x)
         return x
 
     def fit(self, num_epochs, x_train, y_train):
-        inputs = torch.from_numpy(x_train).requires_grad_().float().view(-1, 1)
+        inputs = torch.from_numpy(x_train).float().view(-1, 1)
+        inputs = inputs.cuda() if torch.cuda.is_available() else inputs
+        inputs.requires_grad_()
+
         targets = torch.from_numpy(y_train).float().view(-1, 1)
+        targets = targets.cuda() if torch.cuda.is_available() else targets
+
         step = ModelTrainingStep(self, inputs, targets)
         print(inputs)
         print(targets)
@@ -41,8 +49,10 @@ class SimpleNN(nn.Module):
 
     def predict(self, x):
         self.eval()
+        x_tensor = torch.from_numpy(x).float().view(-1, 1)
+        x_tensor = x_tensor.cuda() if torch.cuda.is_available() else x_tensor
         with torch.no_grad():
-            return self(torch.from_numpy(x).float().view(-1,1)).numpy()
+            return self(x_tensor).cpu().numpy()
 
 
 class ModelTrainingStep:

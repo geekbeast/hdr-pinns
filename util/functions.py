@@ -13,7 +13,7 @@ def esin(x: float):
 def torch_sumAsin(input: torch.Tensor, output: torch.Tensor) -> torch.Tensor:
     total = None
     for i in range(0, output.shape[1], 2):
-        pair = output[:, i:i + 1] * torch.sin(output[:, i + 1:i + 2] * input)
+        pair = torch.exp(output[:, i:i + 1]) * torch.sin(output[:, i + 1:i + 2] * input)
         if total is None:
             total = pair
         else:
