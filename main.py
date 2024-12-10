@@ -48,6 +48,10 @@ if __name__ == '__main__':
     # model = SimpleHdr(opt, torch_sumAsin_loss)
     model = SimpleHdr(optim.Adam, torch_sumAsin_loss)
     model.fit(30000, x_train, y2_train)
+    #model = SimpleNN(optim.Adam, nn.MSELoss())
+    # model = SimpleHdr(opt, torch_sumAsin_loss)
+    # model = SimpleHdr(optim.Adam, torch_sumAsin_loss)
+    # model.fit(10000, x_train, y2_train)
     y_pred = model.predict(x_train)
 
     plt.figure(figsize=(10, 6))

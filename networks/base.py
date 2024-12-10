@@ -18,9 +18,10 @@ class BaseSimpleNetwork(nn.Module):
 
     def configure_optimizer(self, optimizer):
         self.optimizer = optimizer(self.parameters())
+
 class NeuralNet(nn.Module):
 
-    def __init__(self, input_dimension, output_dimension, n_hidden_layers, neurons, regularization_param, regularization_exp, retrain_seed):
+    def __init__(self, input_dimension, output_dimension, n_hidden_layers, neurons, regularization_param, regularization_exp, retrain_seed, activation = nn.SiLU()):
         super(NeuralNet, self).__init__()
         # Number of input dimensions n
         self.input_dimension = input_dimension
@@ -31,7 +32,7 @@ class NeuralNet(nn.Module):
         # Number of hidden layers
         self.n_hidden_layers = n_hidden_layers
         # Activation function
-        self.activation = nn.Tanh()
+        self.activation = activation
         self.regularization_param = regularization_param
         # Regularization exponent
         self.regularization_exp = regularization_exp
