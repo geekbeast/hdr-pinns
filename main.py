@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -10,6 +12,13 @@ from util.functions import esin, TwoSin, MultiSin, torch_esin3d, torch_esin3d_lo
 from util.generate import generate_hf_2d_data, generate
 
 if __name__ == '__main__':
+    # torch.cuda.is_available = lambda: False
+    if torch.cuda.is_available():
+        torch.set_default_device('cuda')
+        torch.set_default_tensor_type(torch.cuda.FloatTensor)
+    else:
+        torch.set_num_threads(os.cpu_count())
+
     # start = 1 / (4 * np.pi)
     # end = start + 2 * (1 / (2 * np.pi))
     start = 0.001
@@ -33,11 +42,16 @@ if __name__ == '__main__':
     plt.ylabel('Y values')
     plt.show()
     def opt(params):
-        return optim.LBFGS(params, max_iter=100, tolerance_grad=1e-10, tolerance_change=1e-10,line_search_fn="strong_wolfe")
-    model = SimpleNN(optim.Adam, nn.MSELoss())
+        return optim.LBFGS(params, max_iter=200, tolerance_grad=1e-10, tolerance_change=1e-10,line_search_fn="strong_wolfe")
+    # model = SimpleNN(opt, nn.MSELoss())
+    # model = SimpleNN(optim.Adam, nn.MSELoss())
+    # model = SimpleHdr(opt, torch_sumAsin_loss)
+    model = SimpleHdr(optim.Adam, torch_sumAsin_loss)
+    model.fit(30000, x_train, y2_train)
+    #model = SimpleNN(optim.Adam, nn.MSELoss())
     # model = SimpleHdr(opt, torch_sumAsin_loss)
     # model = SimpleHdr(optim.Adam, torch_sumAsin_loss)
-    model.fit(10000, x_train, y2_train)
+    # model.fit(10000, x_train, y2_train)
     y_pred = model.predict(x_train)
 
     plt.figure(figsize=(10, 6))

@@ -14,10 +14,10 @@ class SimpleHdr(nn.Module):
         self.activation = nn.SiLU()
         self.fc2 = nn.Linear(10, 10)  # 10 hidden units, 1 output
         self.fc3 = nn.Linear(10, 10)  # 10 hidden units, 1 output
-        self.fc4 = nn.Linear(10, 10)
+        # self.fc4 = nn.Linear(10, 10)
         self.fc5 = nn.Linear(10, 100)
         self.optimizer = optimizer(self.parameters())
-        # self.init_xavier()
+        self.init_xavier()
 
     def forward(self, x):
         x = self.fc1(x)
@@ -26,14 +26,19 @@ class SimpleHdr(nn.Module):
         x = self.activation(x)
         x = self.fc3(x)
         x = self.activation(x)
-        x = self.fc4(x)
-        x = self.activation(x)
+        # x = self.fc4(x)
+        # x = self.activation(x)
         x = self.fc5(x)
         return x
 
     def fit(self, num_epochs, x_train, y_train):
-        inputs = torch.from_numpy(x_train).requires_grad_().float().view(-1, 1)
+        inputs = torch.from_numpy(x_train).float().view(-1, 1)
+        inputs = inputs.cuda() if torch.cuda.is_available() else inputs
+        inputs.requires_grad_()
+
         targets = torch.from_numpy(y_train).float().view(-1, 1)
+        targets = targets.cuda() if torch.cuda.is_available() else targets
+
         step = ModelTrainingStep(self, inputs, targets)
         print(inputs)
         print(targets)
@@ -46,9 +51,10 @@ class SimpleHdr(nn.Module):
 
     def predict(self, x):
         self.eval()
+        x_tensor = torch.from_numpy(x).float().view(-1, 1)
+        x_tensor = x_tensor.cuda() if torch.cuda.is_available() else x_tensor
         with torch.no_grad():
-            return torch_sumAsin(torch.from_numpy(x).float().view(-1, 1),
-                                 self(torch.from_numpy(x).float().view(-1, 1))).numpy()
+            return torch_sumAsin(x_tensor,self(x_tensor)).cpu().numpy()
 
     def init_xavier(self):
         # torch.manual_seed(self.retrain_seed)
