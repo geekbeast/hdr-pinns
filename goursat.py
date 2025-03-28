@@ -27,7 +27,7 @@ if __name__ == '__main__':
     plt.ylabel("t")
     plt.legend()
     plt.show()
-    n_epochs = 1
+    n_epochs = 2
     optimizer_LBFGS = optim.LBFGS(goursat.approximate_solution.parameters(),
                                   lr=float(0.5),
                                   max_iter=500000,

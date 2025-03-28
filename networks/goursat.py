@@ -14,7 +14,7 @@ class Goursat:
         self.n_tb = n_tb_
 
         # Extrema of the solution domain (s,t) in [0,1]x[0,1]
-        self.domain_extrema = torch.tensor([[0,1], # lambda_{x_s,y_t}
+        self.domain_extrema = torch.tensor([[-1,1], # lambda_{x_s,y_t}
                                             [0, 1],  # s dimension
                                             [0, 1]])  # t dimension
 
@@ -190,7 +190,7 @@ class Goursat:
         inputs = self.soboleng.draw(100000)
         inputs = self.convert(inputs)
 
-        inputs[:,0] = .3
+        inputs[:,0] = -0.3974409773682901
         output = self.approximate_solution(inputs).reshape(-1, )
         exact_output = self.approximate_solution(inputs).reshape(-1, )
 
